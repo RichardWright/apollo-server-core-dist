@@ -38,11 +38,7 @@ function filterRender(item) {
 const obs = new PerformanceObserver((items) => {
     items.getEntries().forEach((item) => {
         if (filterRender(item)) {
-            //console.log('@@@ - ' + item.name, + ' ' + item.duration);
-            //console.log(JSON.stringify(item));
             const parts = item.name.split('-');
-            //const fullName = item.name;
-
             const functionName = parts[0];
             //const fileName = parts[1]
             const operationName = parts[1];
@@ -61,11 +57,7 @@ obs.observe({ entryTypes: ['measure'] })
 
 const computeQueryHashMark = "computeQueryHash";
 const parseMark = "parse";
-const responseForOperationMark = "responseForOperation";
 const enablePluginsMark = "enablePluginsForSchemaResolvers";
-
-const test8 = "invokeHookAsyncwillSendResponse";
-//const test9 = "formatResponse";
 
 const graphql_1 = require("graphql");
 const graphql_extensions_1 = require("graphql-extensions");
@@ -212,11 +204,10 @@ function processGraphQLRequest(config, requestContext) {
                     }
                     : Object.create(null))).catch(logger.warn);
             }
-
-            performanceTest.mark(responseForOperationMark + '-' + requestContext.operationName);
+            const responseForOperationMark = "responseForOperation-" + requestContext.operationName;
+            performanceTest.mark(responseForOperationMark);
             let response = yield dispatcher.invokeHooksUntilNonNull('responseForOperation', requestContext);
-            performanceTest.measure("responseForOperation", responseForOperationMark + '-' + requestContext.operationName);
-
+            performanceTest.measure(responseForOperationMark, responseForOperationMark);
 
             if (response == null) {
                 const executionListeners = [];
