@@ -20,44 +20,22 @@ const PerformanceObserver = require("perf_hooks").PerformanceObserver;
 const diagnostics_channel = require('diagnostics_channel');
 const channel = diagnostics_channel.channel('apollo-server-core');
 
-const blocked = ['resolveFieldValueOrError', 'completeValueCatchingError'];
-
-function filterRender(item) {
-    if (item.name && item.duration) {
-        if (blocked.find[item.name]) {
-            if (item.duration < 0.001) {
-                return false;
-            }
-            return true;
-        }
-        return true;
-    }
-    return false;
-}
-
 const obs = new PerformanceObserver((items) => {
     items.getEntries().forEach((item) => {
-        if (filterRender(item)) {
-            const parts = item.name.split('-');
-            const functionName = parts[0];
-            //const fileName = parts[1]
-            const operationName = parts[1];
-            channel.publish({
-                name: item.name,
-                functionName: functionName,
-                operationName: operationName,
-                duration: item.duration
-            });
-        }
+        const parts = item.name.split('-');
+        const functionName = parts[0];
+        const operationName = parts[1];
+
+        channel.publish({
+            name: item.name,
+            functionName: functionName,
+            operationName: operationName,
+            duration: item.duration
+        });
     })
 })
 
 obs.observe({ entryTypes: ['measure'] })
-
-
-const computeQueryHashMark = "computeQueryHash";
-const parseMark = "parse";
-const enablePluginsMark = "enablePluginsForSchemaResolvers";
 
 const graphql_1 = require("graphql");
 const graphql_extensions_1 = require("graphql-extensions");
@@ -121,10 +99,7 @@ function processGraphQLRequest(config, requestContext) {
             }
         }
         else if (query) {
-            console.log('request - query exists, measure');
-            performanceTest.mark(computeQueryHashMark);
             queryHash = computeQueryHash(query);
-            performanceTest.measure("computeQueryHash", computeQueryHashMark);
         }
         else {
             return yield emitErrorAndThrow(new apollo_server_types_1.InvalidGraphQLRequestError('Must provide query string.'));
@@ -156,10 +131,7 @@ function processGraphQLRequest(config, requestContext) {
             if (!requestContext.document) {
                 const parsingDidEnd = yield dispatcher.invokeDidStartHook('parsingDidStart', requestContext);
                 try {
-                    performanceTest.mark(parseMark);
                     requestContext.document = parse(query, config.parseOptions);
-                    performanceTest.measure("parse", parseMark);
-
                     parsingDidEnd();
                 }
                 catch (syntaxError) {
@@ -204,11 +176,7 @@ function processGraphQLRequest(config, requestContext) {
                     }
                     : Object.create(null))).catch(logger.warn);
             }
-            const responseForOperationMark = "responseForOperation-" + requestContext.operationName;
-            performanceTest.mark(responseForOperationMark);
             let response = yield dispatcher.invokeHooksUntilNonNull('responseForOperation', requestContext);
-            performanceTest.measure(responseForOperationMark, responseForOperationMark);
-
             if (response == null) {
                 const executionListeners = [];
                 dispatcher.invokeHookSync('executionDidStart', requestContext).forEach(executionListener => {
@@ -227,13 +195,8 @@ function processGraphQLRequest(config, requestContext) {
                 if (config.fieldResolver) {
                     Object.defineProperty(requestContext.context, schemaInstrumentation_1.symbolUserFieldResolver, { value: config.fieldResolver });
                 }
-                //TEST 5
-                performanceTest.mark(enablePluginsMark + '-' + requestContext.operationName);
                 schemaInstrumentation_1.enablePluginsForSchemaResolvers(config.schema);
-                performanceTest.measure("enablePluginsForSchemaResolvers", enablePluginsMark + '-' + requestContext.operationName);
-
                 try {
-                    //console.log(`>>> httpExecute`)
                     const executeHttpMark = "executeHttp-" + requestContext.operationName;
                     performanceTest.mark(executeHttpMark);
                     const result = yield execute(requestContext);
@@ -255,11 +218,7 @@ function processGraphQLRequest(config, requestContext) {
                 response.extensions = formattedExtensions;
             }
             if (config.formatResponse) {
-
-                //performanceTest.mark(`${test9}-${requestContext.operationName}`);
                 const formattedResponse = config.formatResponse(response, requestContext);
-                //performanceTest.measure(`${test9}-${requestContext.operationName}`, `${test9}-${requestContext.operationName}`);
-
                 if (formattedResponse != null) {
                     response = formattedResponse;
                 }
@@ -312,29 +271,9 @@ function processGraphQLRequest(config, requestContext) {
                 });
                 try {
                     if (config.executor) {
-                        console.log('executor 1')
                         return yield config.executor(requestContext);
                     }
                     else {
-                        console.log('executor 2')
-                        //  console.log(Object.keys(executionArgs));
-                        //console.log(JSON.stringify(executionArgs));
-
-                        //console.log(Object.keys(requestContext));
-                        //console.log(`Requst context:  ${JSON.stringify(requestContext)}`);
-
-                        //console.log(`Requst context operation:  ${JSON.stringify(requestContext.operation)}`);
-                        //console.log(`Requst context document:  ${JSON.stringify(requestContext.document)}`);
-                        //console.log(`Requst operation name:  ${JSON.stringify(requestContext.operationName)}`);
-
-
-                        //console.log(schema)
-                        //console.log(executionArgs.document)
-                        //console.log(executionArgs.rootValue)
-                        //console.log(executionArgs.contextValue)
-                        //console.log(executionArgs.variableValues)
-                        // console.log(executionArgs.operationName)
-
                         return yield graphql_1.execute(executionArgs);
                     }
                 }
@@ -343,25 +282,13 @@ function processGraphQLRequest(config, requestContext) {
                 }
             });
         }
-        //TODO - undo this
         function sendResponse(response) {
             return __awaiter(this, void 0, void 0, function* () {
-                const sendResponseExecuteMark = "sendResponseExecute-" + requestContext.operationName;
-                performanceTest.mark(sendResponseExecuteMark);
-                const result = yield execute(requestContext);
-                performanceTest.measure(sendResponseExecuteMark, sendResponseExecuteMark);
-
-
                 requestContext.response = extensionStack.willSendResponse({
                     graphqlResponse: Object.assign(Object.assign({}, requestContext.response), { errors: response.errors, data: response.data, extensions: response.extensions }),
                     context: requestContext.context,
                 }).graphqlResponse;
-
-                const willSendResponseMark = "willSendResponse-" + requestContext.operationName;
-                performanceTest.mark(willSendResponseMark);
                 yield dispatcher.invokeHookAsync('willSendResponse', requestContext);
-                performanceTest.measure(willSendResponseMark, willSendResponseMark);
-
                 return requestContext.response;
             });
         }

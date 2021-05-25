@@ -169,10 +169,11 @@ function processHTTPRequest(options, httpRequest) {
                 performanceTest.measure(parseGraphQLRequestMark, parseGraphQLRequestMark);
 
                 try {
-                    const buildRequestContextMark = "buildRequestContext-" + request.operationName;
-                    performanceTest.mark(buildRequestContextMark);
+
+                    //const buildRequestContextMark = "buildRequestContext-" + request.operationName;
+                    //performanceTest.mark(buildRequestContextMark);
                     const requestContext = buildRequestContext(request);
-                    performanceTest.measure("buildRequestContext", buildRequestContextMark);
+                    //performanceTest.measure("buildRequestContext", buildRequestContextMark);
 
                     const processGraphQLRequestMark = "processGraphQLRequest-" + request.operationName;
                     performanceTest.mark(processGraphQLRequestMark);
@@ -188,10 +189,10 @@ function processHTTPRequest(options, httpRequest) {
                         }
                     }
 
-                    const serializeGraphQLResponseMark = "serializeGraphQLResponse-" + request.operationName;
-                    performanceTest.mark(serializeGraphQLResponseMark);
+                    //const serializeGraphQLResponseMark = "serializeGraphQLResponse-" + request.operationName;
+                    //performanceTest.mark(serializeGraphQLResponseMark);
                     const serializedGraphqlResponse = serializeGraphQLResponse(response);
-                    performanceTest.measure(serializeGraphQLResponseMark, serializeGraphQLResponseMark);
+                    //performanceTest.measure(serializeGraphQLResponseMark, serializeGraphQLResponseMark);
 
 
                     const prettyJSONStringifyMark = "prettyJSONStringify-" + request.operationName;
