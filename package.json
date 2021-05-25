@@ -50,7 +50,7 @@
     "@apollographql/graphql-playground-html": "1.6.26",
     "@types/graphql-upload": "^8.0.0",
     "@types/ws": "^7.0.0",
-    "apollo-cache-control": "^0.11.6",
+    "apollo-cache-control": "^0.13.0",
     "apollo-datasource": "^0.7.3",
     "apollo-graphql": "^0.6.0",
     "apollo-reporting-protobuf": "^0.6.2",
